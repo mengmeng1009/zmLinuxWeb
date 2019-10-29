@@ -7,3 +7,4 @@
 *.suo
 /zmLinuxWeb/obj
 /zmLinuxWeb/.vs/zmLinuxWeb/v16/Server/sqlite3
+/zmLinuxWeb/bin/Debug/netcoreapp3.0

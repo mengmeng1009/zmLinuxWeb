@@ -35,8 +35,8 @@ namespace zmLinuxWeb
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
+            app.UseStaticFiles();//可以访问静态文件//wwwroot
 
             app.UseRouting();
 

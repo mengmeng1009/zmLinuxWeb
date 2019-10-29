@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>操作主页</title>
+    <script type="text/javascript" src="/js/jquery-2.2.3.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+</head>
+<body>
+    <div id="zm">
+        <div>
+            服务地址：    <input v-model="fuwudizhi">
+        </div>
+        <div>
+            用户名：    <input v-model="zhanghao">
+        </div>
+        <div>
+            密码：    <input v-model="mima">
+        </div>
+        <div>
+            命令：    <input v-model="mingling">
+        </div>
+        <div>
+            <button v-on:click="delu">登陆</button>
+        </div>
+        <div>
+            {{jg}}
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#zm',
+        data: {
+            fuwudizhi: "",
+            zhanghao: "",
+            mima: "",
+            mingling:"",
+            jg:""
+        },
+        methods: {
+            delu: function () {
+                let that = this;
+                $.get("/api/DengLu/" + this.fuwudizhi + "/" + this.zhanghao + "/" + this.mima+"/"+this.mingling, {}, function (r) {
+                    console.log("denglujieguo:", r)
+                    that.jg = r;
+                });
+            }
+        }
+    })
+</script>
+</html>
