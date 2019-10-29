@@ -4,3 +4,6 @@
 
 /.vs
 /zmLinuxWeb/.vs/zmLinuxWeb/v15
+*.suo
+/zmLinuxWeb/obj
+/zmLinuxWeb/.vs/zmLinuxWeb/v16/Server/sqlite3
