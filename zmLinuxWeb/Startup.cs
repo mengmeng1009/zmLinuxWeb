@@ -37,6 +37,7 @@ namespace zmLinuxWeb
             }
             //app.UseHttpsRedirection();
             app.UseStaticFiles();//可以访问静态文件//wwwroot
+            app.UseWebSockets();//可以使用websocket
 
             app.UseRouting();
 

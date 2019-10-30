@@ -1,4 +1,0 @@
-﻿[*.cs]
-
-# IDE0043: 无效的格式字符串
-dotnet_diagnostic.IDE0043.severity = none

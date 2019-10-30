@@ -3,8 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <title>操作主页</title>
-    <script type="text/javascript" src="/js/jquery-2.2.3.js"></script>
+    <script type="text/javascript" src="./js/jquery-2.2.3.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script type="text/javascript" src="./js/websocketjs.js?xxsvvxxzz"></script>
+    <script type="text/javascript" src="./js/jquery-2.2.3.js"></script>
+    <script type="text/javascript" src="./js/zmHelper.js"></script>
+    <script type="text/javascript" src="./js/zmParam.js"></script>
 </head>
 <body>
     <div id="zm">
@@ -12,41 +16,108 @@
             服务地址：    <input v-model="fuwudizhi">
         </div>
         <div>
-            用户名：    <input v-model="zhanghao">
+            用户名：    <input v-model="zhanghu">
         </div>
         <div>
-            密码：    <input v-model="mima">
+            密码：    <input v-model="mima" type="password">
         </div>
         <div>
-            命令：    <input v-model="mingling">
-        </div>
-        <div>
-            <button v-on:click="delu">登陆</button>
+            <button v-on:click="delu">连接服务器</button>
         </div>
         <div>
             {{jg}}
         </div>
+        <div>
+            命令：    <textarea id="sendText" v-model="mingling"></textarea>
+            <button v-on:click="zhixing">执行</button>
+        </div>
+        <div id="jilu"></div>
     </div>
 </body>
 <script type="text/javascript">
     var app = new Vue({
         el: '#zm',
         data: {
-            fuwudizhi: "",
-            zhanghao: "",
-            mima: "",
-            mingling:"",
-            jg:""
+            fuwudizhi: "192.168.65.29",
+            zhanghu: "root",
+            mima: "Def@u1tpwd",
+            mingling: "",
+            jg: ""
+        },
+        created: function () {
+            //vue初始化
         },
         methods: {
             delu: function () {
                 let that = this;
-                $.get("/api/DengLu/" + this.fuwudizhi + "/" + this.zhanghao + "/" + this.mima+"/"+this.mingling, {}, function (r) {
-                    console.log("denglujieguo:", r)
-                    that.jg = r;
-                });
+                let msg = {
+                    cmd: zmParam.websocket.cmd.connet,//
+                    dizhi: that.fuwudizhi,
+                    zhanghu: that.zhanghu,
+                    mima:that.mima
+                }
+                zm.sendData(msg);
+            },
+            zhixing: function () {
+                 let that = this;
+                 let msg = {
+                     cmd: zmParam.websocket.cmd.excmd,//
+                     msg: that.mingling
+                }
+                zm.sendData(msg);
+            },
+            xiaoxichuli: function () {
+                //处理服务器发过来的消息
             }
         }
     })
+</script>
+<!-- 接收消息 -->
+<script type="text/javascript">
+    var jiluarea;
+    var jieshouxiaoxi = function (e) {
+        var msg = e.data;
+        console.log(msg);
+        msg = msg.substr(1, msg.length - 2);
+        var xiaoxi = $("<pre>").addClass("xiaoxi").text(msg);
+        jiluarea.append(xiaoxi);
+        jiluarea.append("<br />");
+        jiluarea.scrollTop(jiluarea[0].scrollHeight)
+    }
+</script>
+<script type="text/javascript">
+    var key = guid()
+    var skop = {
+        url: "ws://127.0.0.1:5000/api/DengLu/login",//127.0.0.1:8066//wss://zm.yunkucun.top:443
+        key: key,
+        onmessage: jieshouxiaoxi,
+        onopen: function (e) {
+            app.jg = "初始化完成";
+        }
+    }
+    var zm = new ZmSocket(skop);
+    function chongxilianjie() {
+        zm.reconnect();
+    }
+</script>
+
+<!-- 发送消息 -->
+<script type="text/javascript">
+    function fasongxiaoxi() {
+        zm.sendData($('#sendText').val());
+        setTimeout(function () { $('#sendText').val(""); }, 10);
+    }
+</script>
+<!-- 发送消息 -->
+<script type="text/javascript">
+    $(function () {
+        $("#jilu").height(window.innerHeight - 250);
+        $('#sendText').keydown(function (e) {
+            if (e.keyCode == 13) {
+                app.zhixing();
+            }
+        });
+        jiluarea = $("#jilu");
+    });
 </script>
 </html>
