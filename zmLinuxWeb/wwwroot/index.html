@@ -79,7 +79,7 @@
         var msg = e.data;
         console.log(msg);
         msg = msg.substr(1, msg.length - 2);
-        var xiaoxi = $("<pre>").addClass("xiaoxi").text(msg);
+        var xiaoxi = $("<div>").addClass("xiaoxi").html(msg.replace(/\\r\\n/g,"<br />"));
         jiluarea.append(xiaoxi);
         jiluarea.append("<br />");
         jiluarea.scrollTop(jiluarea[0].scrollHeight)

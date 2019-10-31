@@ -52,9 +52,15 @@ public static class MessageHelper
                         _userSSH.Remove(userid);
                         SSHHelper ssh = new SSHHelper(jmsg["dizhi"].ToString(), jmsg["zhanghu"].ToString(),jmsg["mima"].ToString());
                         _userSSH.Add(userid, ssh);
-                        await ssh.RunCommandAsync("cd /");
-                        string refmsg =await ssh.RunCommandAsync("ll");
-                        await SocketHelper.SendMessageAsync(userid, refmsg);
+                        ssh.RunCommand("cd /");
+                        ssh.DataReceived += (sh, data) =>
+                        {
+                            if (data.msgType==SshMessageEnum.zifuchuan)
+                            {
+                                SocketHelper.SendMessageAsync(userid, data.msgContent);
+                            }
+                        };
+                        ssh.RunCommand("ll");                        
                         break;
                     };
                 case "excmd": {
@@ -63,8 +69,7 @@ public static class MessageHelper
                         {
                             await SocketHelper.SendMessageAsync(userid, "执行失败");
                         }
-                        string refmsg = await ssh.RunCommandAsync(jmsg["msg"].ToString());
-                        await SocketHelper.SendMessageAsync(userid, refmsg);
+                        ssh.RunCommand(jmsg["msg"].ToString());
                         break; 
                     };
                 default:

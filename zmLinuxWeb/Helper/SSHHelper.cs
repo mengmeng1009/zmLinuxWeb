@@ -12,23 +12,16 @@ public class SSHHelper
     private string host = "127.0.0.1";
     private SshClient sshClient;
     private ShellStream shellStream;
-    private Shell shell;
-    private SshCommand sshCommand;
-    private Stream inStream=new MemoryStream() ;
-    private StreamWriter Writer;
-    private Stream outStream = new MemoryStream();
-    private StreamReader Reader;
+    /// <summary>
+    /// 用来处理消息结果的事件委托
+    /// </summary>
+    public event EventHandler<SshMessageEventArgs> DataReceived;
     public SSHHelper(string dizhi, string zhanghao, string mima)
     {
         this.user = zhanghao;
         this.pass = mima;
         this.host = dizhi;
-        this.Writer = new StreamWriter(this.inStream);
-        this.Reader = new StreamReader(this.outStream);
         Connect();
-        //var output = client.RunCommand("echo test");
-        //  client.Disconnect();
-        //  Console.WriteLine(output.ToString());
     }
     private void Connect()
     {
@@ -37,35 +30,30 @@ public class SSHHelper
         //启动连接
         sshClient.Connect();
         this.shellStream = sshClient.CreateShellStream("zm", 1000, 1000, 1000, 1000, 10240);
-        //this.shellStream.DataReceived+=
-        this.shell = sshClient.CreateShell(this.inStream, this.outStream, this.outStream);
-        this.shell.Start();
-        sshCommand = sshClient.CreateCommand("cd /");
+        this.shellStream.DataReceived += (sh,data) =>
+        {
+            //Console.WriteLine(data.ToJSON());
+            string jg = System.Text.Encoding.UTF8.GetString(data.Data);
+            //Console.WriteLine("excmd:"+jg);
+            this.DataReceived?.Invoke(this, new SshMessageEventArgs(SshMessageEnum.zifuchuan, jg));
+        };
     }
-    public async Task<string> RunCommandAsync(string cmd)
+    public void RunCommand(string cmd)
     {
         if (sshClient == null || !sshClient.IsConnected)
         {
             this.Connect();
         }
-        //SshCommand jg = sshClient.CreateCommand("cd /");
-        this.shellStream.Write(cmd);
-        sshCommand.Execute(cmd);
-        this.Writer.Write(cmd);
-        this.Writer.Flush();
-        await this.shellStream.FlushAsync();
-        System.Threading.Thread.Sleep(500);
-        string tjg = this.shellStream.DataAvailable.ToString();
-        if (this.shellStream.CanRead)
+        if (this.shellStream.CanWrite)
         {
-            tjg += this.shellStream.ReadLine();
+            this.shellStream.WriteLine(cmd);
+            this.shellStream.FlushAsync();
         }
-        if (this.shellStream.CanSeek)
+        else
         {
-            tjg += this.shellStream.ReadLine();
+            this.DataReceived?.Invoke(this, new SshMessageEventArgs(SshMessageEnum.zifuchuan, "当前不可输入"));
         }
-        string sjg = this.Reader.ReadToEnd();
-        return sshCommand.Result +"_zm_"+sjg+"_zm_"+ tjg;
+        return;
     }
     public void Disconnect()
     {

@@ -24,7 +24,7 @@ namespace zmLinuxWeb.Controllers
         public async Task<string> GetAsync(string fuwudizhi, string zhanghao, string mima,string cmd)
         {
             SSHHelper ssh = new SSHHelper(fuwudizhi, zhanghao, mima);
-            string test =await ssh.RunCommandAsync(cmd);
+            string test = "ok";//ssh.RunCommand(cmd);
             return string.Format("{0}:{1}>{2}....{3}", fuwudizhi, zhanghao, mima,test);
         }
         /// <summary>
