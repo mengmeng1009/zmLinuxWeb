@@ -4,48 +4,88 @@
     <meta charset="utf-8" />
     <title>操作主页</title>
     <script type="text/javascript" src="./js/jquery-2.2.3.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <script type="text/javascript" src="./js/websocketjs.js?xxsvvxxzz"></script>
-    <script type="text/javascript" src="./js/jquery-2.2.3.js"></script>
     <script type="text/javascript" src="./js/zmHelper.js"></script>
     <script type="text/javascript" src="./js/zmParam.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <style>
+        .shuchu{
+            background-color:aquamarine;
+            padding:5px;
+        }
+        .shuru{
+            background-color:antiquewhite;
+            padding:5px;
+        }
+    </style>
 </head>
 <body>
     <div id="zm">
-        <div>
-            服务地址：    <input v-model="fuwudizhi">
+        <div v-if="!isconnet">
+            <div>
+                服务地址：    <input v-model="fuwudizhi">
+            </div>
+            <div>
+                用户名：    <input v-model="zhanghu">
+            </div>
+            <div>
+                密码：    <input v-model="mima" type="password">
+            </div>
+            <div>
+                <button v-on:click="delu">连接服务器</button>
+            </div>
+            <div>
+                {{jg}}
+            </div>
         </div>
-        <div>
-            用户名：    <input v-model="zhanghu">
+        <div v-else>
+            <div id="jilu" style="height:90vh;width:100%; overflow:auto; border: 1px solid #333;">
+                <div v-for="xx in arrXiaoXi" v-bind:class="[xx.leixing,'xiaoxi']"  v-bind:key="xx.key">
+                    {{xx.neirong}}
+                </div>
+            </div>
+            <div style="width:100%;display:flex; padding-top:1vh; height:5vh;">
+                <span>命令</span>
+                <textarea id="sendText" v-model="mingling" v-on:keyup.enter="zhixing" style="height: 4vh; width: 90%;"></textarea>
+                <button v-on:click="zhixing">执行</button>
+            </div>
+
         </div>
-        <div>
-            密码：    <input v-model="mima" type="password">
-        </div>
-        <div>
-            <button v-on:click="delu">连接服务器</button>
-        </div>
-        <div>
-            {{jg}}
-        </div>
-        <div>
-            命令：    <textarea id="sendText" v-model="mingling"></textarea>
-            <button v-on:click="zhixing">执行</button>
-        </div>
-        <div id="jilu"></div>
+
+
     </div>
 </body>
 <script type="text/javascript">
     var app = new Vue({
         el: '#zm',
         data: {
+            isconnet: false,//是否连接websocket成功
             fuwudizhi: "192.168.65.29",
             zhanghu: "root",
             mima: "Def@u1tpwd",
             mingling: "",
-            jg: ""
+            jiumingling:"",
+            jg: "",
+            websocket: null,
+            xiaoxijishu:0,
+            arrXiaoXi:[]
         },
         created: function () {
             //vue初始化
+            let that = this;
+            var key = guid()
+            var skop = {
+                url: "ws://127.0.0.1:5000/api/denglu/login",//127.0.0.1:8066//wss://zm.yunkucun.top:443
+                key: key,
+                onmessage: that.xiaoxichuli,
+                onopen: function (e) {
+                    that.jg = "初始化完成";
+                    //that.connet = true
+                }
+            }
+            that.websocket = new ZmSocket(skop);
+
+
         },
         methods: {
             delu: function () {
@@ -54,70 +94,61 @@
                     cmd: zmParam.websocket.cmd.connet,//
                     dizhi: that.fuwudizhi,
                     zhanghu: that.zhanghu,
-                    mima:that.mima
+                    mima: that.mima
                 }
-                zm.sendData(msg);
+                that.websocket.sendData(msg);
             },
             zhixing: function () {
-                 let that = this;
-                 let msg = {
-                     cmd: zmParam.websocket.cmd.excmd,//
-                     msg: that.mingling
+                let that = this;
+                let msg = {
+                    cmd: zmParam.websocket.cmd.excmd,//
+                    msg: that.mingling.trim()
                 }
-                zm.sendData(msg);
+                 let xxobj = {
+                        key: that.xiaoxijishu,
+                        leixing: "shuru",
+                        neirong:that.mingling.trim()
+                    }
+                    that.xiaoxijishu++
+                    that.arrXiaoXi.push(xxobj);
+                that.websocket.sendData(msg);
+                that.jiumingling = that.mingling.trim();//将执行命令存到历史命令内
+                that.mingling = ""
             },
-            xiaoxichuli: function () {
+            xiaoxichuli: function (e) {
+                let that = this
                 //处理服务器发过来的消息
+                let xiaoxi = JSON.parse(e.data)
+                if (!that.isconnet) {
+                    that.jg = xiaoxi
+                    if (xiaoxi == "conneted") {
+                        that.isconnet = true
+                    }
+                } else {
+                    if (/\[(\w|\W)*\]#/.test(xiaoxi)) {
+                        //屏蔽空白消息
+                        return;
+                    }
+                    if (that.jiumingling==xiaoxi.trim()) {
+                        //屏蔽输入命令
+                        return;
+                    }
+                    //添加消息内容到显示
+                    let xxobj = {
+                        key: that.xiaoxijishu,
+                        leixing: "shuchu",
+                        neirong:xiaoxi
+                    }
+                    that.xiaoxijishu++
+                    that.arrXiaoXi.push(xxobj);
+                }
             }
         }
     })
 </script>
-<!-- 接收消息 -->
-<script type="text/javascript">
-    var jiluarea;
-    var jieshouxiaoxi = function (e) {
-        var msg = e.data;
-        console.log(msg);
-        msg = msg.substr(1, msg.length - 2);
-        var xiaoxi = $("<div>").addClass("xiaoxi").html(msg.replace(/\\r\\n/g,"<br />"));
-        jiluarea.append(xiaoxi);
-        jiluarea.append("<br />");
-        jiluarea.scrollTop(jiluarea[0].scrollHeight)
-    }
-</script>
-<script type="text/javascript">
-    var key = guid()
-    var skop = {
-        url: "ws://127.0.0.1:5000/api/DengLu/login",//127.0.0.1:8066//wss://zm.yunkucun.top:443
-        key: key,
-        onmessage: jieshouxiaoxi,
-        onopen: function (e) {
-            app.jg = "初始化完成";
-        }
-    }
-    var zm = new ZmSocket(skop);
-    function chongxilianjie() {
-        zm.reconnect();
-    }
-</script>
 
-<!-- 发送消息 -->
-<script type="text/javascript">
-    function fasongxiaoxi() {
-        zm.sendData($('#sendText').val());
-        setTimeout(function () { $('#sendText').val(""); }, 10);
-    }
-</script>
-<!-- 发送消息 -->
-<script type="text/javascript">
-    $(function () {
-        $("#jilu").height(window.innerHeight - 250);
-        $('#sendText').keydown(function (e) {
-            if (e.keyCode == 13) {
-                app.zhixing();
-            }
-        });
-        jiluarea = $("#jilu");
-    });
-</script>
+
+
+
+
 </html>

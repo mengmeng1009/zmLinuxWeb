@@ -51,6 +51,13 @@ public static class MessageHelper
                     {
                         _userSSH.Remove(userid);
                         SSHHelper ssh = new SSHHelper(jmsg["dizhi"].ToString(), jmsg["zhanghu"].ToString(),jmsg["mima"].ToString());
+                        if (!ssh.IsConnet)
+                        {
+                            ssh = null;
+                            SocketHelper.SendMessageAsync(userid, "connet faild");
+                            return;
+                        }
+                       await SocketHelper.SendMessageAsync(userid, "conneted");
                         _userSSH.Add(userid, ssh);
                         ssh.RunCommand("cd /");
                         ssh.DataReceived += (sh, data) =>

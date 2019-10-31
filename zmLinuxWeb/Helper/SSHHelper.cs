@@ -12,6 +12,13 @@ public class SSHHelper
     private string host = "127.0.0.1";
     private SshClient sshClient;
     private ShellStream shellStream;
+    public bool IsConnet
+    {
+        get
+        {
+            return sshClient != null&&sshClient.IsConnected;
+        }
+    }
     /// <summary>
     /// 用来处理消息结果的事件委托
     /// </summary>
@@ -21,12 +28,12 @@ public class SSHHelper
         this.user = zhanghao;
         this.pass = mima;
         this.host = dizhi;
+        //创建SSH connection
+        sshClient = new SshClient(host, user, pass);
         Connect();
     }
     private void Connect()
-    {
-        //创建SSH connection
-        sshClient = new SshClient(host, user, pass);
+    {        
         //启动连接
         sshClient.Connect();
         this.shellStream = sshClient.CreateShellStream("zm", 1000, 1000, 1000, 1000, 10240);
@@ -47,7 +54,7 @@ public class SSHHelper
         if (this.shellStream.CanWrite)
         {
             this.shellStream.WriteLine(cmd);
-            this.shellStream.FlushAsync();
+            //this.shellStream.FlushAsync();
         }
         else
         {
