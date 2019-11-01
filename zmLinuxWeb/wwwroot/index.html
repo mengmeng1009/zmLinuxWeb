@@ -7,15 +7,31 @@
     <script type="text/javascript" src="./js/websocketjs.js?xxsvvxxzz"></script>
     <script type="text/javascript" src="./js/zmHelper.js"></script>
     <script type="text/javascript" src="./js/zmParam.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script type="text/javascript" src="./js/Vue.js"></script>
+    <link rel="stylesheet" href="./css/font-awesome/css/font-awesome.min.css" />
     <style>
-        .shuchu{
-            background-color:aquamarine;
-            padding:5px;
+        .xiaoxi {
+            margin: 5px;
+            white-space: pre-wrap;
+            padding: 5px;
         }
-        .shuru{
-            background-color:antiquewhite;
-            padding:5px;
+
+        .shuchu {
+            background-color: aquamarine;
+        }
+
+        .shuru {
+            background-color: antiquewhite;
+        }
+        .tuxing .xuhao{
+            width:40px;
+            text-align:right;
+            padding-right:3px;
+            display: inline-block;
+        }
+        .tuxing .tubiao{
+            width:26px;
+            padding-right:3px;
         }
     </style>
 </head>
@@ -38,17 +54,39 @@
                 {{jg}}
             </div>
         </div>
-        <div v-else>
-            <div id="jilu" style="height:90vh;width:100%; overflow:auto; border: 1px solid #333;">
-                <div v-for="xx in arrXiaoXi" v-bind:class="[xx.leixing,'xiaoxi']"  v-bind:key="xx.key">
-                    {{xx.neirong}}
+        <div v-else style="width:98vw;height:98vh; display:flex;">
+            <div class="tuxing" style="width:40%;border:1px solid #333;">
+                视图窗口:{{wenjianshumu}}
+                <div style="width:100%;">
+                    <div v-for="xx in arrwenjianjia" class="wenjianjia" v-bind:key="xx.key">
+                        <span class="xuhao">{{xx.key}}</span><i class="tubiao fa fa-folder"></i>{{xx.neirong}}
+                    </div>
+                    <div v-for="xx in arrwenjian" class="wenjian" v-bind:key="xx.key">
+                        <span class="xuhao">{{xx.key}}</span><i class="tubiao fa fa-file-text-o"></i>{{xx.neirong}}
+                    </div>
                 </div>
             </div>
-            <div style="width:100%;display:flex; padding-top:1vh; height:5vh;">
-                <span>命令</span>
-                <textarea id="sendText" v-model="mingling" v-on:keyup.enter="zhixing" style="height: 4vh; width: 90%;"></textarea>
-                <button v-on:click="zhixing">执行</button>
+            <div class="mingling" style="width:40%;border:1px solid #333;">
+                命令窗口
+                <div style="width:100%;">
+                    <div id="jilu" style="height:86vh;width:100%; overflow:auto; border: 1px solid #333;">
+                        <div v-for="xx in arrXiaoXi" v-bind:class="[xx.leixing,'xiaoxi']" v-bind:key="xx.key">{{xx.neirong}}</div>
+                    </div>
+                    <div style="width:100%;display:flex; padding-top:1vh; height:5vh;">
+                        <span>命令</span>
+                        <textarea id="sendText" v-model="mingling" v-on:keyup.enter="zhixing" style="height: 4vh; width: 90%;"></textarea>
+                        <button v-on:click="zhixing">执行</button>
+                    </div>
+                </div>
             </div>
+            <div class="kuozhan" style="width:20%;border:1px solid #333;">
+                扩展窗口
+                <div style="width:100%;">
+
+                </div>
+
+            </div>
+
 
         </div>
 
@@ -62,13 +100,16 @@
             isconnet: false,//是否连接websocket成功
             fuwudizhi: "192.168.65.29",
             zhanghu: "root",
-            mima: "Def@u1tpwd",
+            mima: "",
             mingling: "",
-            jiumingling:"",
+            jiumingling: "",
             jg: "",
             websocket: null,
-            xiaoxijishu:0,
-            arrXiaoXi:[]
+            xiaoxijishu: 0,
+            arrXiaoXi: [],
+            wenjianshumu: 0,
+            arrwenjianjia: [],
+            arrwenjian: []
         },
         created: function () {
             //vue初始化
@@ -104,13 +145,13 @@
                     cmd: zmParam.websocket.cmd.excmd,//
                     msg: that.mingling.trim()
                 }
-                 let xxobj = {
-                        key: that.xiaoxijishu,
-                        leixing: "shuru",
-                        neirong:that.mingling.trim()
-                    }
-                    that.xiaoxijishu++
-                    that.arrXiaoXi.push(xxobj);
+                let xxobj = {
+                    key: that.xiaoxijishu,
+                    leixing: "shuru",
+                    neirong: that.mingling.trim()
+                }
+                that.xiaoxijishu++
+                that.arrXiaoXi.push(xxobj);
                 that.websocket.sendData(msg);
                 that.jiumingling = that.mingling.trim();//将执行命令存到历史命令内
                 that.mingling = ""
@@ -118,26 +159,62 @@
             xiaoxichuli: function (e) {
                 let that = this
                 //处理服务器发过来的消息
-                let xiaoxi = JSON.parse(e.data)
+                let xiaoxi = JSON.parse(e.data).trim()
                 if (!that.isconnet) {
                     that.jg = xiaoxi
                     if (xiaoxi == "conneted") {
                         that.isconnet = true
+                        //连接成功后，执行一下获取目录的命令
+                        that.mingling = "ll";
+                        that.zhixing();
                     }
                 } else {
                     if (/\[(\w|\W)*\]#/.test(xiaoxi)) {
                         //屏蔽空白消息
                         return;
                     }
-                    if (that.jiumingling==xiaoxi.trim()) {
+                    if (that.jiumingling == xiaoxi.trim()) {
                         //屏蔽输入命令
                         return;
                     }
+                    if (that.jiumingling == "ll") {
+                        //如果上一条命令是列出目录内容
+                        let regwenjian = /([\w\-\.]+)\s+(\d)+\s+(\w+)\s+(\w+)\s+(\d+)\s+(\w+)\s+(\d+)\s+([\d\:]+)\s+(\S+)/g;
+                        let wenjiantype = /\.[\w]*$/g
+                        let regshumu = /total (\d+)/;
+                        let regshumujg = regshumu.exec(xiaoxi)
+                        if (regshumujg) {
+                            that.arrwenjianjia = [];
+                            that.arrwenjian = [];
+                            that.wenjianshumu = parseInt(regshumujg[1])
+                            let wenjianjiajishu = 0;
+                            let wenjianjishu = 0;
+                            for (let i = 0; i < that.wenjianshumu; i++) {
+                                let regwenjianjg = regwenjian.exec(xiaoxi)
+                                let wenjianobj = {
+                                    key: i,
+                                    leixing: "shuchu",
+                                    neirong: regwenjianjg[9]
+                                }
+                                if (wenjiantype.test(regwenjianjg[9])) {
+                                    wenjianjishu++;
+                                    wenjianobj.key = wenjianjishu;                                    
+                                    that.arrwenjian.push(wenjianobj)
+                                } else {
+                                    wenjianjiajishu++;
+                                    wenjianobj.key = wenjianjiajishu;
+                                    that.arrwenjianjia.push(wenjianobj)
+                                }
+                            }
+
+                        }
+                    }
+
                     //添加消息内容到显示
                     let xxobj = {
                         key: that.xiaoxijishu,
                         leixing: "shuchu",
-                        neirong:xiaoxi
+                        neirong: xiaoxi.trim()
                     }
                     that.xiaoxijishu++
                     that.arrXiaoXi.push(xxobj);

@@ -59,15 +59,14 @@ public static class MessageHelper
                         }
                        await SocketHelper.SendMessageAsync(userid, "conneted");
                         _userSSH.Add(userid, ssh);
-                        ssh.RunCommand("cd /");
                         ssh.DataReceived += (sh, data) =>
                         {
-                            if (data.msgType==SshMessageEnum.zifuchuan)
+                            if (data.msgType == SshMessageEnum.zifuchuan)
                             {
                                 SocketHelper.SendMessageAsync(userid, data.msgContent);
                             }
                         };
-                        ssh.RunCommand("ll");                        
+                        ssh.RunCommand("cd /");             
                         break;
                     };
                 case "excmd": {
